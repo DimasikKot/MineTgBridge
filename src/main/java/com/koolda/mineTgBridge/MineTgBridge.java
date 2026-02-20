@@ -43,7 +43,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         }
 
         Bukkit.getPluginManager().registerEvents(this, this);
-        getLogger().info("JoinSendTg enabled");
+        getLogger().info("MineTgBridge enabled");
 
         startTelegramListener();
     }
