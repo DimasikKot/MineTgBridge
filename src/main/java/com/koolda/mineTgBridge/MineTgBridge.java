@@ -22,7 +22,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
     private String token;
     private String chatId;
     private String groupLink;
-    private boolean sendAllThanText;
+    private boolean sendEverythingAsText;
     private int timeCheck;
     private String telegramMessage;
     private String tgCheckMessage;
@@ -36,7 +36,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         token = getConfig().getString("telegram.token");
         chatId = getConfig().getString("telegram.chat-id");
         groupLink = getConfig().getString("telegram.group-link");
-        sendAllThanText = getConfig().getBoolean("telegram.send-all-than-text", false);
+        sendEverythingAsText = getConfig().getBoolean("telegram.send-everything-as-text", false);
         timeCheck = getConfig().getInt("telegram.send-all-than-text", 5); // 5 секунд
         telegramMessage = getConfig().getString("message.telegram");
         tgCheckMessage = getConfig().getString("message.tg-check");
@@ -134,8 +134,8 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
             JSONObject message = update.getJSONObject("message");
 
-            // игнорируем не текст
-            if (!message.has("text") && sendAllThanText) continue;
+            // нет текста? Проверяем можно ли выводить фото или аудио
+            if (!message.has("text") && !sendEverythingAsText) continue;
 
             // пропускаем только нужную группу
             String chat = message.getJSONObject("chat").get("username").toString();

@@ -33,7 +33,7 @@ telegram:
   token: "BOT_TOKEN"        # Telegram bot token (BotFather)
   chat-id: "@group_link"    # @group_link or numeric ID
   group-link: "group_link"  # Group username WITHOUT @
-  send-all-than-text: true  # Send non-text messages as text
+  send-everything-as-text: true  # Send non-text messages as text
   time-check: 5             # Update interval (seconds)
 
 message:

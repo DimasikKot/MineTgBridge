@@ -4,7 +4,7 @@ telegram:
   token: "BOT_TOKEN" # Возьмите его в BotFather
   chat-id: "@group_link" # Можно добавить бота в группу "@group_link" или писать лично в сообщения админу "123456"
   group-link: "group_link" # "group_link" - без @
-  send-all-than-text: true # отправлять ли в чат текст "3x Изображение" или стикеры, аудио
+  send-everything-as-text: true # отправлять ли в чат текст "3x Изображение" или стикеры, аудио
   time-check: 5 # сколько секунд ожидать между проверками сообщений
 
 message:
