@@ -25,6 +25,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
     private Boolean sendAllThanText;
     private int timeCheck;
     private String telegramMessage;
+    private String tgCheckMessage;
     private String serverMessage;
 
 
@@ -38,6 +39,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         sendAllThanText = getConfig().getBoolean("telegram.send-all-than-text", false);
         timeCheck = getConfig().getInt("telegram.send-all-than-text", 5); // 5 секунд
         telegramMessage = getConfig().getString("message.telegram");
+        tgCheckMessage = getConfig().getString("message.tg-check");
         serverMessage = getConfig().getString("message.server");
 
         if (token == null || chatId == null) {
@@ -124,17 +126,11 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         JSONObject json = new JSONObject(response);
         JSONArray results = json.getJSONArray("result");
 
-        sendToMinecraftChat("", "Чекаем");
-
         for (int i = 0; i < results.length(); i++) {
             JSONObject update = results.getJSONObject(i);
             lastUpdateId = update.getLong("update_id");
 
-            sendToMinecraftChat("", "1");
-
             if (!update.has("message")) continue;
-
-            sendToMinecraftChat("", "2");
 
             JSONObject message = update.getJSONObject("message");
 
@@ -147,7 +143,8 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
             String text = describeTelegramMessage(message);
 
-            if (text.startsWith("[TG")) return;
+            // предотвращение петли, проверка: "не отправлено ли сообщение ботом?"
+            if (text.startsWith(tgCheckMessage)) return;
 
             JSONObject from = message.getJSONObject("from");
             String name = from.optString("username",
@@ -162,8 +159,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
             return message.getString("text");
         }
         if (message.has("photo")) {
-            int count = message.getJSONArray("photo").length();
-            return count + "× Изображение";
+            return "Изображение";
         }
         if (message.has("video")) {
             return "Видео";
