@@ -1,0 +1,4 @@
+name: MineTgBridge
+version: '1.0'
+main: com.koolda.mineTgBridge.MineTgBridge
+api-version: '1.21'
