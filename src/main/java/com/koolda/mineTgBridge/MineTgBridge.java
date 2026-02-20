@@ -21,6 +21,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
     private String token;
     private String chatId;
+    private String groupLink;
     private Boolean sendAllThanText;
     private int timeCheck;
     private String telegramMessage;
@@ -33,6 +34,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
         token = getConfig().getString("telegram.token");
         chatId = getConfig().getString("telegram.chat-id");
+        groupLink = getConfig().getString("telegram.group-link");
         sendAllThanText = getConfig().getBoolean("telegram.send-all-than-text", false);
         timeCheck = getConfig().getInt("telegram.send-all-than-text", 5); // 5 секунд
         telegramMessage = getConfig().getString("message.telegram");
@@ -122,20 +124,26 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         JSONObject json = new JSONObject(response);
         JSONArray results = json.getJSONArray("result");
 
+        sendToMinecraftChat("", "Чекаем");
+
         for (int i = 0; i < results.length(); i++) {
             JSONObject update = results.getJSONObject(i);
             lastUpdateId = update.getLong("update_id");
 
+            sendToMinecraftChat("", "1");
+
             if (!update.has("message")) continue;
+
+            sendToMinecraftChat("", "2");
 
             JSONObject message = update.getJSONObject("message");
 
             // игнорируем не текст
             if (!message.has("text") && sendAllThanText) continue;
 
-            // пропускаем только нужную группа
-            String chat = message.getJSONObject("chat").get("id").toString();
-            if (!chat.equals(chatId)) continue;
+            // пропускаем только нужную группу
+            String chat = message.getJSONObject("chat").get("username").toString();
+            if (!chat.equals(groupLink)) continue;
 
             String text = describeTelegramMessage(message);
 

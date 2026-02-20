@@ -1,5 +1,5 @@
 name: MineTgBridge
-version: 'v1.0-paper1.21.10'
+version: 'v1.3-paper1.21.10'
 main: com.koolda.mineTgBridge.MineTgBridge
 api-version: '1.21'
 author: DKot
