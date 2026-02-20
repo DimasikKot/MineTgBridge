@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.koolda'
-version = '1.0'
+version = 'v1.0-paper1.21.10'
 
 repositories {
     mavenCentral()
@@ -16,6 +16,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
+    implementation 'org.json:json:20240303'
 }
 
 tasks {

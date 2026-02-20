@@ -1,20 +1,20 @@
 package com.koolda.mineTgBridge;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 public final class MineTgBridge extends JavaPlugin implements Listener {
 
@@ -41,18 +41,22 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
         Bukkit.getPluginManager().registerEvents(this, this);
         getLogger().info("JoinSendTg enabled");
+
+        startTelegramListener();
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        String playerName = event.getPlayer().getName();
-        String text = telegramMessage.replace("{player}", playerName);
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
+        if (event.getMessage().startsWith("/")) return;
 
-        // Отправка в Telegram
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> sendToTelegram(text));
+        String player = event.getPlayer().getName();
+        String message = event.getMessage();
 
-        // Сообщение в чат сервера
-        sendToServerChat();
+        String text = serverMessage.replace("{player}", player).replace("{message}", message);
+
+        Bukkit.getScheduler().runTaskAsynchronously(this,
+                () -> sendToTelegram(text)
+        );
     }
 
     private void sendToTelegram(String message) {
@@ -76,14 +80,67 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         }
     }
 
-    private void sendToServerChat() {
-        Component message = Component.text(serverMessage, NamedTextColor.YELLOW);
+    private long lastUpdateId = 0;
 
-        Bukkit.getServer().broadcast(message);
+    private void startTelegramListener() {
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            while (true) {
+                try {
+                    checkTelegramUpdates();
+                    Thread.sleep(5000);
+                } catch (Exception e) {
+                    getLogger().warning("Telegram listener error: " + e.getMessage());
+                }
+            }
+        });
     }
 
-    //    @Override
-    //    public void onDisable() {
-    //        Plugin shutdown logic
-    //    }
+    private void checkTelegramUpdates() throws Exception {
+        String url = "https://api.telegram.org/bot" + token +
+                "/getUpdates?offset=" + (lastUpdateId + 1);
+
+        HttpURLConnection connection =
+                (HttpURLConnection) URI.create(url).toURL().openConnection();
+        connection.setRequestMethod("GET");
+
+        String response = new String(connection.getInputStream().readAllBytes(),
+                StandardCharsets.UTF_8);
+
+        JSONObject json = new JSONObject(response);
+        JSONArray results = json.getJSONArray("result");
+
+        for (int i = 0; i < results.length(); i++) {
+            JSONObject update = results.getJSONObject(i);
+            lastUpdateId = update.getLong("update_id");
+
+            if (!update.has("message")) continue;
+
+            JSONObject message = update.getJSONObject("message");
+
+            // ❌ игнорируем не текст
+            if (!message.has("text")) continue;
+
+            // ❌ только нужная группа
+            String chat = message.getJSONObject("chat").get("id").toString();
+            if (!chat.equals(chatId)) continue;
+
+            String text = message.getString("text");
+
+            JSONObject from = message.getJSONObject("from");
+            String name = from.optString("username",
+                    from.optString("first_name", "TG"));
+
+            sendToMinecraftChat(name, text);
+        }
+    }
+
+    private void sendToMinecraftChat(String user, String message) {
+        Bukkit.getScheduler().runTask(this, () -> {
+            Component text = Component.text(telegramMessage.replace("{user}", user),
+                            NamedTextColor.AQUA)
+                    .append(Component.text(message, NamedTextColor.WHITE));
+
+            Bukkit.broadcast(text);
+        });
+    }
 }
