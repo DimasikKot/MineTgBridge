@@ -1,83 +1,139 @@
 
-[English](/README.en_US.md) | [Русский](/README.md)
+[Русский](/README.md) | **English**
 
 ---
 
-# JoinSendTg
+# MineTgBridge
 
-**JoinSendTg** is a simple Minecraft server plugin that sends Telegram notifications when a player joins the server and displays a message with a Telegram link directly in-game.
+**MineTgBridge** is a Minecraft (Paper / Spigot) plugin that **synchronizes chat between a Minecraft server and a Telegram group**.
 
----
-
-### 📌 Features
-
-* 📩 Sends a **Telegram message** when a player joins the server
-* 💬 Displays a message in the server chat on join
-* 🔗 Optional Telegram link support
-* ⚙️ Easy configuration via `config.yml`
+Messages sent in Minecraft appear in Telegram, and messages from Telegram are broadcast to the Minecraft chat in real time.
 
 ---
 
-### ⚙️ Configuration (`config.yml`)
+## ✨ Features
+
+- 🔁 Two-way chat synchronization:
+  - Minecraft → Telegram
+  - Telegram → Minecraft
+- 👤 Displays Telegram usernames in Minecraft chat
+- 🛑 Message loop protection (bot ignores its own messages)
+- 🖼️ Support for non-text messages (photos, stickers, voice, etc.)
+- ⚙️ Customizable message formats
+- ⏱ Configurable update interval
+
+---
+
+## ⚙️ Configuration (`config.yml`)
 
 ```yaml
-# v1.1 - configuration version, update if you are using an older one
+# v1.4 - config version, update if you use an older one
 
 telegram:
-  token: "BOT_TOKEN" # Get it from @BotFather
-  chat-id: "CHAT_ID" # Chat ID or user ID (group or private messages)
+  token: "BOT_TOKEN"        # Telegram bot token (BotFather)
+  chat-id: "@group_link"    # @group_link or numeric ID
+  group-link: "group_link"  # Group username WITHOUT @
+  send-all-than-text: true  # Send non-text messages as text
+  time-check: 5             # Update interval (seconds)
 
 message:
-  telegram: "Player {player} joined the server" # {player} — player nickname
-  server: "📢 Our Telegram: "
-  link: "https://t.me/link" # Leave empty "" to disable the link
-```
+  telegram: "<{user}> "     # Telegram → Minecraft format
+  tg-check: "[TG"           # Loop protection prefix
+  server: "<{player}> {message}" # Minecraft → Telegram format
+````
 
 ---
 
-### 🔑 Configuration Options
+## 🔧 Configuration Options
 
-#### `telegram.token`
+### `telegram.token`
 
 Your Telegram bot token.
 Get it from **@BotFather**.
 
-#### `telegram.chat-id`
+---
 
-Target chat or user ID:
+### `telegram.chat-id`
 
+Chat where messages will be sent.
+
+Examples:
+
+* Group: `@group_link`
 * Private chat: `123456789`
-* Group chat (bot must be added): `-100XXXXXXXXXX`
-
-#### `message.telegram`
-
-Message sent to Telegram when a player joins.
-Available placeholders:
-
-* `{player}` — player nickname
-
-#### `message.server`
-
-Message displayed in the in-game chat when a player joins.
-
-#### `message.link`
-
-Telegram link:
-
-* If set — shown in chat
-* If empty (`""`) — link will not be shown
 
 ---
 
-### 📦 Installation
+### `telegram.group-link`
 
-1. Put `JoinSendTg.jar` into the `plugins` folder
-2. Start the server
-3. Edit `config.yml`
-4. Restart the server
+Telegram group username **without `@`**.
+Used to filter incoming messages.
 
 ---
 
-### 📄 License
+### `telegram.send-all-than-text`
 
-This project is licensed under the **MIT License**
+Controls handling of **non-text messages**:
+
+* `true` — send description (`Image`, `Sticker`, `Voice message`)
+* `false` — ignore them
+
+---
+
+### `telegram.time-check`
+
+Interval (in seconds) between Telegram API checks.
+
+Recommended: `3–10` seconds.
+
+---
+
+### `message.telegram`
+
+Format for messages **from Telegram to Minecraft**.
+
+Placeholders:
+
+* `{user}` — Telegram username
+
+---
+
+### `message.server`
+
+Format for messages **from Minecraft to Telegram**.
+
+Placeholders:
+
+* `{player}` — Minecraft nickname
+* `{message}` — chat message
+
+---
+
+### `message.tg-check`
+
+Marker string to prevent message loops
+(bot will ignore messages starting with this prefix).
+
+---
+
+## 📦 Installation
+
+1. Download `MineTgBridge.jar`
+2. Put it into the `plugins` folder
+3. Start the server (config will be generated)
+4. Edit `config.yml`
+5. Restart the server
+
+---
+
+## 🧩 Requirements
+
+* Minecraft **Paper / Spigot**
+* Java **17+**
+* Access to `api.telegram.org`
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License**.
