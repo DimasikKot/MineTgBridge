@@ -1,11 +1,12 @@
 package com.koolda.mineTgBridge;
 
+import io.papermc.paper.event.player.AsyncChatEvent;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -20,6 +21,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
     private String token;
     private String chatId;
+    private Boolean sendAllThanText;
     private String telegramMessage;
     private String serverMessage;
 
@@ -30,6 +32,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
         token = getConfig().getString("telegram.token");
         chatId = getConfig().getString("telegram.chat-id");
+        sendAllThanText = getConfig().getBoolean("telegram.send-all-than-text", false);
         telegramMessage = getConfig().getString("message.telegram");
         serverMessage = getConfig().getString("message.server");
 
@@ -46,13 +49,17 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onPlayerChat(AsyncPlayerChatEvent event) {
-        if (event.getMessage().startsWith("/")) return;
+    public void onPlayerChat(AsyncChatEvent event) {
+        String message = PlainTextComponentSerializer.plainText()
+                .serialize(event.message());
+
+        if (message.startsWith("/")) return;
 
         String player = event.getPlayer().getName();
-        String message = event.getMessage();
 
-        String text = serverMessage.replace("{player}", player).replace("{message}", message);
+        String text = serverMessage
+                .replace("{player}", player)
+                .replace("{message}", message);
 
         Bukkit.getScheduler().runTaskAsynchronously(this,
                 () -> sendToTelegram(text)
@@ -83,16 +90,20 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
     private long lastUpdateId = 0;
 
     private void startTelegramListener() {
-        Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
-            while (true) {
-                try {
-                    checkTelegramUpdates();
-                    Thread.sleep(5000);
-                } catch (Exception e) {
-                    getLogger().warning("Telegram listener error: " + e.getMessage());
-                }
-            }
-        });
+        Bukkit.getScheduler().runTaskTimerAsynchronously(
+                this,
+                this::safeCheckTelegramUpdates,
+                0L,
+                20L * 5 // 5 секунд
+        );
+    }
+
+    private void safeCheckTelegramUpdates() {
+        try {
+            checkTelegramUpdates();
+        } catch (Exception e) {
+            getLogger().warning("Telegram listener error: " + e.getMessage());
+        }
     }
 
     private void checkTelegramUpdates() throws Exception {
@@ -117,14 +128,16 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
             JSONObject message = update.getJSONObject("message");
 
-            // ❌ игнорируем не текст
-            if (!message.has("text")) continue;
+            // игнорируем не текст
+            if (!message.has("text") && sendAllThanText) continue;
 
-            // ❌ только нужная группа
+            // пропускаем только нужную группа
             String chat = message.getJSONObject("chat").get("id").toString();
             if (!chat.equals(chatId)) continue;
 
-            String text = message.getString("text");
+            String text = describeTelegramMessage(message);
+
+            if (text.startsWith("[TG")) return;
 
             JSONObject from = message.getJSONObject("from");
             String name = from.optString("username",
@@ -132,6 +145,43 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
 
             sendToMinecraftChat(name, text);
         }
+    }
+
+    private String describeTelegramMessage(JSONObject message) {
+        if (message.has("text")) {
+            return message.getString("text");
+        }
+
+        if (message.has("photo")) {
+            int count = message.getJSONArray("photo").length();
+            return count + "× Изображение";
+        }
+
+        if (message.has("video")) {
+            return "Видео";
+        }
+
+        if (message.has("audio")) {
+            return "Аудио";
+        }
+
+        if (message.has("voice")) {
+            return "Голосовое сообщение";
+        }
+
+        if (message.has("sticker")) {
+            return "Стикер";
+        }
+
+        if (message.has("animation")) {
+            return "GIF";
+        }
+
+        if (message.has("document")) {
+            return "Документ";
+        }
+
+        return "Сообщение";
     }
 
     private void sendToMinecraftChat(String user, String message) {
