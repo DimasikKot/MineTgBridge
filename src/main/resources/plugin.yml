@@ -1,4 +1,6 @@
 name: MineTgBridge
-version: '1.0'
+version: 'v1.0-paper1.21.10'
 main: com.koolda.mineTgBridge.MineTgBridge
 api-version: '1.21'
+author: DKot
+description: Sends Telegram message when player send message to chat
