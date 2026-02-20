@@ -22,7 +22,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
     private String token;
     private String chatId;
     private String groupLink;
-    private Boolean sendAllThanText;
+    private boolean sendAllThanText;
     private int timeCheck;
     private String telegramMessage;
     private String tgCheckMessage;
