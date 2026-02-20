@@ -22,6 +22,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
     private String token;
     private String chatId;
     private Boolean sendAllThanText;
+    private int timeCheck;
     private String telegramMessage;
     private String serverMessage;
 
@@ -33,6 +34,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         token = getConfig().getString("telegram.token");
         chatId = getConfig().getString("telegram.chat-id");
         sendAllThanText = getConfig().getBoolean("telegram.send-all-than-text", false);
+        timeCheck = getConfig().getInt("telegram.send-all-than-text", 5); // 5 секунд
         telegramMessage = getConfig().getString("message.telegram");
         serverMessage = getConfig().getString("message.server");
 
@@ -94,7 +96,7 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
                 this,
                 this::safeCheckTelegramUpdates,
                 0L,
-                20L * 5 // 5 секунд
+                20L * timeCheck
         );
     }
 
@@ -151,36 +153,28 @@ public final class MineTgBridge extends JavaPlugin implements Listener {
         if (message.has("text")) {
             return message.getString("text");
         }
-
         if (message.has("photo")) {
             int count = message.getJSONArray("photo").length();
             return count + "× Изображение";
         }
-
         if (message.has("video")) {
             return "Видео";
         }
-
         if (message.has("audio")) {
             return "Аудио";
         }
-
         if (message.has("voice")) {
             return "Голосовое сообщение";
         }
-
         if (message.has("sticker")) {
             return "Стикер";
         }
-
         if (message.has("animation")) {
             return "GIF";
         }
-
         if (message.has("document")) {
             return "Документ";
         }
-
         return "Сообщение";
     }
 
